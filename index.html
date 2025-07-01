@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Funil Stories</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body,
+      html {
+        height: 100%;
+        font-family: sans-serif;
+        background-color: #000;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .story-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+      }
+
+      .story-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        z-index: -1;
+      }
+
+      .progress-bar {
+        display: flex;
+        gap: 4px;
+        width: 100%;
+        position: absolute;
+        top: 20px;
+        padding: 0 20px;
+      }
+
+      .progress-segment {
+        flex: 1;
+        height: 4px;
+        background-color: #333;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background-color: #fff;
+        transition: width 5s linear;
+      }
+
+      .story-content {
+        width: 100%;
+        padding: 40px 20px 60px;
+        font-size: 1.8rem;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      .nav-buttons {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        transform: translateY(-50%);
+      }
+
+      .nav-buttons button {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+      }
+
+      .nav-buttons button svg {
+        fill: #fff;
+        width: 32px;
+        height: 32px;
+      }
+
+      .cta-button {
+        background-color: #fff;
+        color: #000;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+
+      @media (max-width: 600px) {
+        .story-content {
+          font-size: 1.4rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="story-container">
+      <div class="story-background" id="story-background"></div>
+      <div class="progress-bar" id="progress-bar"></div>
+      <div class="nav-buttons">
+        <button id="prev-btn" aria-label="Anterior">
+          <svg viewBox="0 0 24 24">
+            <path d="M15.41 16.58L10.83 12l4.58-4.59L14 6l-6 6 6 6z" />
+          </svg>
+        </button>
+        <button id="next-btn" aria-label="Próximo">
+          <svg viewBox="0 0 24 24">
+            <path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z" />
+          </svg>
+        </button>
+      </div>
+      <div class="story-content" id="story-content"></div>
+    </div>
+
+    <script>
+      const stories = [
+        {
+          text: "Você já se perguntou por que a maioria desiste de ganhar dinheiro online?",
+          image:
+            "https://via.placeholder.com/720x1280/000000/FFFFFF?text=Story+1",
+        },
+        {
+          text: "Existe um padrão invisível que faz 93% falharem nos primeiros 7 dias...",
+          image:
+            "https://via.placeholder.com/720x1280/111111/FFFFFF?text=Story+2",
+        },
+        {
+          text: "Mas e se você pudesse quebrar esse padrão com um método simples?",
+          image:
+            "https://via.placeholder.com/720x1280/222222/FFFFFF?text=Story+3",
+        },
+        {
+          text: "Conheça o Método das Marcas Digitais — usado até por quem nunca vendeu nada antes.",
+          image:
+            "https://via.placeholder.com/720x1280/333333/FFFFFF?text=Story+4",
+        },
+        {
+          text: "Veja o que a Amanda disse após aplicar o método: 'Faturei R$2.300 em 5 dias!'",
+          image:
+            "https://via.placeholder.com/720x1280/444444/FFFFFF?text=Story+5",
+        },
+        {
+          text: "Funciona mesmo se você não tiver seguidores, experiência ou produto próprio.",
+          image:
+            "https://via.placeholder.com/720x1280/555555/FFFFFF?text=Story+6",
+        },
+        {
+          text: "Toque no botão abaixo para descobrir como aplicar esse método ainda hoje.",
+          image:
+            "https://via.placeholder.com/720x1280/666666/FFFFFF?text=Story+7",
+        },
+      ];
+
+      const progressBar = document.getElementById("progress-bar");
+      const storyContent = document.getElementById("story-content");
+      const storyBackground = document.getElementById("story-background");
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+
+      let current = 0;
+
+      function renderProgress() {
+        progressBar.innerHTML = "";
+        stories.forEach((_, index) => {
+          const segment = document.createElement("div");
+          segment.className = "progress-segment";
+          const fill = document.createElement("div");
+          fill.className = "progress-fill";
+
+          if (index < current) {
+            fill.style.width = "100%";
+          } else if (index === current) {
+            setTimeout(() => {
+              fill.style.width = "100%";
+            }, 100);
+          }
+
+          segment.appendChild(fill);
+          progressBar.appendChild(segment);
+        });
+      }
+
+      function renderStory() {
+        const story = stories[current];
+        storyContent.innerHTML = story.text;
+        storyBackground.style.backgroundImage = `url(${story.image})`;
+
+        if (current === stories.length - 1) {
+          nextBtn.innerHTML = "<span class='cta-button'>Ver Método</span>";
+        } else {
+          nextBtn.innerHTML =
+            '<svg viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+        }
+
+        renderProgress();
+      }
+
+      nextBtn.addEventListener("click", () => {
+        if (current < stories.length - 1) {
+          current++;
+          renderStory();
+        } else {
+          window.location.href = "https://sualandingpage.com";
+        }
+      });
+
+      prevBtn.addEventListener("click", () => {
+        if (current > 0) {
+          current--;
+          renderStory();
+        }
+      });
+
+      renderStory();
+    </script>
+  </body>
+</html>
