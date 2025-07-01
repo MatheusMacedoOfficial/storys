@@ -64,6 +64,7 @@
         position: absolute;
         top: 20px;
         padding: 0 20px;
+        z-index: 10;
       }
 
       .progress-segment {
@@ -78,6 +79,7 @@
         height: 100%;
         width: 0%;
         background-color: #fff;
+        -webkit-transition: width 5s linear;
         transition: width 5s linear;
       }
 
@@ -87,6 +89,16 @@
         font-size: 1.8rem;
         text-align: center;
         background: rgba(0, 0, 0, 0.6);
+        z-index: 1;
+        display: flex; /* Adicionado para flexbox */
+        flex-direction: column; /* Conteúdo em coluna */
+        justify-content: flex-end; /* Alinha o conteúdo ao final */
+        align-items: center; /* Centraliza horizontalmente */
+        flex-grow: 1; /* Permite que ocupe o espaço disponível */
+      }
+
+      .story-text {
+        margin-bottom: 20px; /* Espaçamento entre texto e botão CTA */
       }
 
       .nav-buttons {
@@ -98,6 +110,7 @@
         justify-content: space-between;
         padding: 0 20px;
         transform: translateY(-50%);
+        z-index: 5;
       }
 
       .nav-buttons button {
@@ -116,14 +129,35 @@
         background-color: #fff;
         color: #000;
         font-weight: bold;
-        padding: 10px 20px;
-        border-radius: 5px;
+        padding: 15px 30px; /* Aumentei o padding para ser mais proeminente */
+        border-radius: 8px; /* Ajustei o border-radius */
         display: inline-block;
+        text-decoration: none; /* Remover sublinhado do link */
+        font-size: 1.2rem; /* Tamanho da fonte do botão */
+        margin-top: auto; /* Empurra o botão para o final do flex container */
+      }
+
+      /* Estilo para ocultar os botões de navegação lateral na última história */
+      .hide-nav-buttons .nav-buttons {
+        display: none;
+      }
+
+      /* Estilo para alinhar o botão CTA no centro */
+      .cta-centered-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-bottom: 30px; /* Ajuste para o espaçamento do rodapé */
       }
 
       @media (max-width: 600px) {
         .story-content {
           font-size: 1.4rem;
+        }
+        .cta-button {
+          padding: 12px 25px;
+          font-size: 1rem;
         }
       }
     </style>
@@ -151,7 +185,9 @@
           </svg>
         </button>
       </div>
-      <div class="story-content" id="story-content"></div>
+      <div class="story-content" id="story-content">
+        <div class="story-text" id="story-text"></div>
+      </div>
     </div>
 
     <script>
@@ -189,18 +225,22 @@
           text: "Toque no botão abaixo para descobrir como aplicar esse método ainda hoje.",
           image:
             "https://via.placeholder.com/720x1280/666666/FFFFFF?text=Story+7",
+          cta: true, // Adicionamos uma propriedade 'cta' para identificar a última história
         },
       ];
 
       const progressBar = document.getElementById("progress-bar");
       const storyContent = document.getElementById("story-content");
+      const storyTextDiv = document.getElementById("story-text"); // Novo elemento para o texto
       const storyBackground = document.getElementById("story-background");
       const storyVideo = document.getElementById("story-video");
       const prevBtn = document.getElementById("prev-btn");
       const nextBtn = document.getElementById("next-btn");
       const storyContainer = document.getElementById("story-container");
+      const navButtonsContainer = document.querySelector(".nav-buttons"); // Seleciona o contêiner dos botões de navegação
 
       let current = 0;
+      let progressTimeout;
 
       function renderProgress() {
         progressBar.innerHTML = "";
@@ -213,11 +253,10 @@
           if (index < current) {
             fill.style.width = "100%";
           } else if (index === current) {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                fill.style.width = "100%";
-              });
-            });
+            clearTimeout(progressTimeout);
+            progressTimeout = setTimeout(() => {
+              fill.style.width = "100%";
+            }, 50);
           }
 
           segment.appendChild(fill);
@@ -227,25 +266,49 @@
 
       function renderStory() {
         const story = stories[current];
-        storyContent.innerHTML = story.text;
+        storyTextDiv.innerHTML = story.text; // Atribui o texto ao novo div
+
+        storyVideo.pause();
+        storyVideo.currentTime = 0;
+
+        // Remove o botão CTA existente antes de adicionar um novo
+        const existingCtaButton = storyContent.querySelector(
+          ".cta-button-wrapper"
+        );
+        if (existingCtaButton) {
+          existingCtaButton.remove();
+        }
 
         if (story.video) {
           storyBackground.style.display = "none";
           storyVideo.src = story.video;
           storyVideo.style.display = "block";
-          storyVideo.play();
+          storyVideo.oncanplaythrough = () => {
+            storyVideo
+              .play()
+              .catch((e) => console.error("Erro ao tentar tocar o vídeo:", e));
+          };
         } else {
-          storyVideo.pause();
           storyVideo.style.display = "none";
           storyBackground.style.display = "block";
           storyBackground.style.backgroundImage = `url(${story.image})`;
         }
 
-        if (current === stories.length - 1) {
-          nextBtn.innerHTML = `<span class='cta-button'>Ver Método</span>`;
+        if (story.cta) {
+          // Verifica se é a história com CTA
+          // Oculta os botões de navegação lateral
+          navButtonsContainer.style.display = "none";
+
+          // Cria o botão CTA e o adiciona no story-content
+          const ctaButtonWrapper = document.createElement("div");
+          ctaButtonWrapper.className = "cta-centered-container";
+          ctaButtonWrapper.innerHTML = `<a href="https://sualandingpage.com" class="cta-button">Ver Método</a>`;
+          storyContent.appendChild(ctaButtonWrapper);
+
+          clearTimeout(progressTimeout); // Para a barra de progresso no último slide
         } else {
-          nextBtn.innerHTML =
-            '<svg viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+          // Mostra os botões de navegação lateral
+          navButtonsContainer.style.display = "flex";
         }
 
         renderProgress();
@@ -256,6 +319,7 @@
           current++;
           renderStory();
         } else {
+          // Se já está na última história e é clicado, navega para a landing page
           window.location.href = "https://sualandingpage.com";
         }
       });
@@ -276,11 +340,14 @@
 
       storyContainer.addEventListener("touchend", (e) => {
         touchEndX = e.changedTouches[0].screenX;
-        if (touchEndX < touchStartX - 50) {
-          nextBtn.click();
-        }
-        if (touchEndX > touchStartX + 50) {
-          prevBtn.click();
+        // Adicionado a condição para que o swipe não ative o CTA
+        if (!stories[current].cta) {
+          if (touchEndX < touchStartX - 50) {
+            nextBtn.click();
+          }
+          if (touchEndX > touchStartX + 50) {
+            prevBtn.click();
+          }
         }
       });
 
