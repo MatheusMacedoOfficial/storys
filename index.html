@@ -121,17 +121,6 @@
         display: inline-block;
       }
 
-      .restart-button {
-        margin-top: 20px;
-        font-size: 1rem;
-        background: none;
-        color: #fff;
-        border: 1px solid #fff;
-        padding: 10px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
       @media (max-width: 600px) {
         .story-content {
           font-size: 1.4rem;
@@ -253,23 +242,13 @@
         }
 
         if (current === stories.length - 1) {
-          nextBtn.innerHTML = `
-          <div>
-            <span class='cta-button'>Ver Método</span><br />
-            <button class='restart-button' onclick='restart()'>Recomeçar</button>
-          </div>
-        `;
+          nextBtn.innerHTML = `<span class='cta-button'>Ver Método</span>`;
         } else {
           nextBtn.innerHTML =
             '<svg viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
         }
 
         renderProgress();
-      }
-
-      function restart() {
-        current = 0;
-        renderStory();
       }
 
       nextBtn.addEventListener("click", () => {
