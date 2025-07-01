@@ -79,8 +79,8 @@
         height: 100%;
         width: 0%;
         background-color: #fff;
-        -webkit-transition: width 5s linear;
-        transition: width 5s linear;
+        /* Removemos a transição CSS aqui */
+        /* transition: width 5s linear; */
       }
 
       .story-content {
@@ -90,15 +90,15 @@
         text-align: center;
         background: rgba(0, 0, 0, 0.6);
         z-index: 1;
-        display: flex; /* Adicionado para flexbox */
-        flex-direction: column; /* Conteúdo em coluna */
-        justify-content: flex-end; /* Alinha o conteúdo ao final */
-        align-items: center; /* Centraliza horizontalmente */
-        flex-grow: 1; /* Permite que ocupe o espaço disponível */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        flex-grow: 1;
       }
 
       .story-text {
-        margin-bottom: 20px; /* Espaçamento entre texto e botão CTA */
+        margin-bottom: 20px;
       }
 
       .nav-buttons {
@@ -129,26 +129,20 @@
         background-color: #fff;
         color: #000;
         font-weight: bold;
-        padding: 15px 30px; /* Aumentei o padding para ser mais proeminente */
-        border-radius: 8px; /* Ajustei o border-radius */
+        padding: 15px 30px;
+        border-radius: 8px;
         display: inline-block;
-        text-decoration: none; /* Remover sublinhado do link */
-        font-size: 1.2rem; /* Tamanho da fonte do botão */
-        margin-top: auto; /* Empurra o botão para o final do flex container */
+        text-decoration: none;
+        font-size: 1.2rem;
+        margin-top: auto;
       }
 
-      /* Estilo para ocultar os botões de navegação lateral na última história */
-      .hide-nav-buttons .nav-buttons {
-        display: none;
-      }
-
-      /* Estilo para alinhar o botão CTA no centro */
       .cta-centered-container {
         width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding-bottom: 30px; /* Ajuste para o espaçamento do rodapé */
+        padding-bottom: 30px;
       }
 
       @media (max-width: 600px) {
@@ -196,53 +190,114 @@
           text: "Você já se perguntou por que a maioria desiste de ganhar dinheiro online?",
           image:
             "https://via.placeholder.com/720x1280/000000/FFFFFF?text=Story+1",
+          duration: 5000, // 5 segundos
         },
         {
           text: "Existe um padrão invisível que faz 93% falharem nos primeiros 7 dias...",
           video: "https://www.w3schools.com/html/mov_bbb.mp4",
+          duration: null, // Duração do vídeo será usada
         },
         {
           text: "Mas e se você pudesse quebrar esse padrão com um método simples?",
           image:
             "https://via.placeholder.com/720x1280/222222/FFFFFF?text=Story+3",
+          duration: 5000,
         },
         {
           text: "Conheça o Método das Marcas Digitais — usado até por quem nunca vendeu nada antes.",
           image:
             "https://via.placeholder.com/720x1280/333333/FFFFFF?text=Story+4",
+          duration: 5000,
         },
         {
           text: "Veja o que a Amanda disse após aplicar o método: 'Faturei R$2.300 em 5 dias!'",
           image:
             "https://via.placeholder.com/720x1280/444444/FFFFFF?text=Story+5",
+          duration: 5000,
         },
         {
           text: "Funciona mesmo se você não tiver seguidores, experiência ou produto próprio.",
           image:
             "https://via.placeholder.com/720x1280/555555/FFFFFF?text=Story+6",
+          duration: 5000,
         },
         {
           text: "Toque no botão abaixo para descobrir como aplicar esse método ainda hoje.",
           image:
             "https://via.placeholder.com/720x1280/666666/FFFFFF?text=Story+7",
-          cta: true, // Adicionamos uma propriedade 'cta' para identificar a última história
+          cta: true,
+          duration: 5000, // Apenas para consistência, mas não animará se for CTA
         },
       ];
 
       const progressBar = document.getElementById("progress-bar");
       const storyContent = document.getElementById("story-content");
-      const storyTextDiv = document.getElementById("story-text"); // Novo elemento para o texto
+      const storyTextDiv = document.getElementById("story-text");
       const storyBackground = document.getElementById("story-background");
       const storyVideo = document.getElementById("story-video");
       const prevBtn = document.getElementById("prev-btn");
       const nextBtn = document.getElementById("next-btn");
       const storyContainer = document.getElementById("story-container");
-      const navButtonsContainer = document.querySelector(".nav-buttons"); // Seleciona o contêiner dos botões de navegação
+      const navButtonsContainer = document.querySelector(".nav-buttons");
 
       let current = 0;
-      let progressTimeout;
+      let animationFrameId; // Para controlar o requestAnimationFrame
+      let startTime; // Para o início da animação
+      let currentFillElement = null; // O elemento fill da barra de progresso atual
 
-      function renderProgress() {
+      const DEFAULT_STORY_DURATION = 5000; // 5 segundos para imagens
+
+      function animateProgressBar(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsedTime = timestamp - startTime;
+        const story = stories[current];
+        let duration = story.duration;
+
+        // Se for vídeo, pega a duração real do vídeo
+        if (story.video && storyVideo.duration && !isNaN(storyVideo.duration)) {
+          duration = storyVideo.duration * 1000; // Converte segundos para milissegundos
+        } else if (story.video && !storyVideo.duration) {
+          // Se o vídeo ainda não carregou a duração, aguarda
+          animationFrameId = requestAnimationFrame(animateProgressBar);
+          return;
+        }
+
+        const progress = Math.min(elapsedTime / duration, 1);
+
+        if (currentFillElement) {
+          currentFillElement.style.width = `${progress * 100}%`;
+        }
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(animateProgressBar);
+        } else {
+          // Animação completa, avança para a próxima história
+          if (current < stories.length - 1) {
+            current++;
+            renderStory();
+          } else {
+            // Se for a última história, e não for CTA, pode ter uma ação final ou parar
+            // Para o caso do CTA, a ação é o clique no botão
+            if (!stories[current].cta) {
+              window.location.href = "https://sualandingpage.com";
+            }
+          }
+        }
+      }
+
+      function startProgressBarAnimation() {
+        // Cancela qualquer animação pendente
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+        startTime = null; // Reinicia o tempo para a nova animação
+        // Começa a animação apenas se não for a última história (CTA)
+        if (!stories[current].cta) {
+          animationFrameId = requestAnimationFrame(animateProgressBar);
+        }
+      }
+
+      function renderProgressBars() {
         progressBar.innerHTML = "";
         stories.forEach((_, index) => {
           const segment = document.createElement("div");
@@ -251,12 +306,12 @@
           fill.className = "progress-fill";
 
           if (index < current) {
-            fill.style.width = "100%";
+            fill.style.width = "100%"; // Histórias passadas ficam 100% preenchidas
           } else if (index === current) {
-            clearTimeout(progressTimeout);
-            progressTimeout = setTimeout(() => {
-              fill.style.width = "100%";
-            }, 50);
+            currentFillElement = fill; // Armazena a referência para o preenchimento atual
+            fill.style.width = "0%"; // Garante que a barra comece do zero
+          } else {
+            fill.style.width = "0%"; // Histórias futuras ficam zeradas
           }
 
           segment.appendChild(fill);
@@ -266,14 +321,13 @@
 
       function renderStory() {
         const story = stories[current];
-        storyTextDiv.innerHTML = story.text; // Atribui o texto ao novo div
+        storyTextDiv.innerHTML = story.text;
 
         storyVideo.pause();
         storyVideo.currentTime = 0;
 
-        // Remove o botão CTA existente antes de adicionar um novo
         const existingCtaButton = storyContent.querySelector(
-          ".cta-button-wrapper"
+          ".cta-centered-container"
         );
         if (existingCtaButton) {
           existingCtaButton.remove();
@@ -287,44 +341,62 @@
             storyVideo
               .play()
               .catch((e) => console.error("Erro ao tentar tocar o vídeo:", e));
+            startProgressBarAnimation(); // Inicia a animação da barra quando o vídeo estiver pronto
+          };
+          // Em caso de erro na reprodução do vídeo (fallback), ainda tentar animar
+          storyVideo.onerror = () => {
+            console.warn(
+              "Erro ao carregar/reproduzir vídeo, usando duração padrão."
+            );
+            startProgressBarAnimation();
           };
         } else {
           storyVideo.style.display = "none";
           storyBackground.style.display = "block";
           storyBackground.style.backgroundImage = `url(${story.image})`;
+          startProgressBarAnimation(); // Inicia a animação da barra para imagens
         }
 
         if (story.cta) {
-          // Verifica se é a história com CTA
-          // Oculta os botões de navegação lateral
           navButtonsContainer.style.display = "none";
 
-          // Cria o botão CTA e o adiciona no story-content
           const ctaButtonWrapper = document.createElement("div");
           ctaButtonWrapper.className = "cta-centered-container";
           ctaButtonWrapper.innerHTML = `<a href="https://sualandingpage.com" class="cta-button">Ver Método</a>`;
           storyContent.appendChild(ctaButtonWrapper);
 
-          clearTimeout(progressTimeout); // Para a barra de progresso no último slide
+          // Cancela a animação da barra de progresso se for uma história CTA
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
         } else {
-          // Mostra os botões de navegação lateral
           navButtonsContainer.style.display = "flex";
         }
 
-        renderProgress();
+        renderProgressBars(); // Renderiza as barras de progresso (estado inicial)
       }
 
       nextBtn.addEventListener("click", () => {
+        // Ao clicar em next, cancela a animação atual para iniciar a próxima imediatamente
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
         if (current < stories.length - 1) {
           current++;
           renderStory();
         } else {
-          // Se já está na última história e é clicado, navega para a landing page
-          window.location.href = "https://sualandingpage.com";
+          // Se já está na última história e é clicado (e não é CTA, que teria seu próprio link)
+          if (!stories[current].cta) {
+            window.location.href = "https://sualandingpage.com";
+          }
         }
       });
 
       prevBtn.addEventListener("click", () => {
+        // Ao clicar em prev, cancela a animação atual
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
         if (current > 0) {
           current--;
           renderStory();
@@ -336,21 +408,40 @@
 
       storyContainer.addEventListener("touchstart", (e) => {
         touchStartX = e.changedTouches[0].screenX;
+        // Pausa a animação da barra de progresso e do vídeo ao tocar na tela
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+        if (storyVideo.style.display === "block") {
+          storyVideo.pause();
+        }
       });
 
       storyContainer.addEventListener("touchend", (e) => {
         touchEndX = e.changedTouches[0].screenX;
-        // Adicionado a condição para que o swipe não ative o CTA
         if (!stories[current].cta) {
           if (touchEndX < touchStartX - 50) {
+            // Swipe para esquerda (próximo)
             nextBtn.click();
-          }
-          if (touchEndX > touchStartX + 50) {
+          } else if (touchEndX > touchStartX + 50) {
+            // Swipe para direita (anterior)
             prevBtn.click();
+          } else {
+            // Se não houve swipe significativo, retoma a animação (clique curto na tela)
+            if (storyVideo.style.display === "block") {
+              storyVideo
+                .play()
+                .catch((e) => console.error("Erro ao retomar vídeo:", e));
+            }
+            startProgressBarAnimation();
           }
+        } else {
+          // Se for a história CTA, não retoma animação nem faz swipe de navegação
+          // Permite que o clique na tela não faça nada a não ser no botão CTA
         }
       });
 
+      // Inicia a primeira história quando a página carregar
       renderStory();
     </script>
   </body>
