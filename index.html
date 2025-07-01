@@ -32,6 +32,7 @@
         width: 100%;
         max-width: 480px;
         overflow: hidden;
+        touch-action: pan-y;
       }
 
       .story-background {
@@ -43,6 +44,17 @@
         background-size: cover;
         background-position: center;
         z-index: -1;
+      }
+
+      .story-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        display: none;
       }
 
       .progress-bar {
@@ -109,6 +121,17 @@
         display: inline-block;
       }
 
+      .restart-button {
+        margin-top: 20px;
+        font-size: 1rem;
+        background: none;
+        color: #fff;
+        border: 1px solid #fff;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
       @media (max-width: 600px) {
         .story-content {
           font-size: 1.4rem;
@@ -117,8 +140,15 @@
     </style>
   </head>
   <body>
-    <div class="story-container">
+    <div class="story-container" id="story-container">
       <div class="story-background" id="story-background"></div>
+      <video
+        class="story-video"
+        id="story-video"
+        muted
+        autoplay
+        playsinline
+      ></video>
       <div class="progress-bar" id="progress-bar"></div>
       <div class="nav-buttons">
         <button id="prev-btn" aria-label="Anterior">
@@ -144,8 +174,7 @@
         },
         {
           text: "Existe um padrão invisível que faz 93% falharem nos primeiros 7 dias...",
-          image:
-            "https://via.placeholder.com/720x1280/111111/FFFFFF?text=Story+2",
+          video: "https://www.w3schools.com/html/mov_bbb.mp4",
         },
         {
           text: "Mas e se você pudesse quebrar esse padrão com um método simples?",
@@ -177,8 +206,10 @@
       const progressBar = document.getElementById("progress-bar");
       const storyContent = document.getElementById("story-content");
       const storyBackground = document.getElementById("story-background");
+      const storyVideo = document.getElementById("story-video");
       const prevBtn = document.getElementById("prev-btn");
       const nextBtn = document.getElementById("next-btn");
+      const storyContainer = document.getElementById("story-container");
 
       let current = 0;
 
@@ -193,9 +224,11 @@
           if (index < current) {
             fill.style.width = "100%";
           } else if (index === current) {
-            setTimeout(() => {
-              fill.style.width = "100%";
-            }, 100);
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                fill.style.width = "100%";
+              });
+            });
           }
 
           segment.appendChild(fill);
@@ -206,16 +239,37 @@
       function renderStory() {
         const story = stories[current];
         storyContent.innerHTML = story.text;
-        storyBackground.style.backgroundImage = `url(${story.image})`;
+
+        if (story.video) {
+          storyBackground.style.display = "none";
+          storyVideo.src = story.video;
+          storyVideo.style.display = "block";
+          storyVideo.play();
+        } else {
+          storyVideo.pause();
+          storyVideo.style.display = "none";
+          storyBackground.style.display = "block";
+          storyBackground.style.backgroundImage = `url(${story.image})`;
+        }
 
         if (current === stories.length - 1) {
-          nextBtn.innerHTML = "<span class='cta-button'>Ver Método</span>";
+          nextBtn.innerHTML = `
+          <div>
+            <span class='cta-button'>Ver Método</span><br />
+            <button class='restart-button' onclick='restart()'>Recomeçar</button>
+          </div>
+        `;
         } else {
           nextBtn.innerHTML =
             '<svg viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
         }
 
         renderProgress();
+      }
+
+      function restart() {
+        current = 0;
+        renderStory();
       }
 
       nextBtn.addEventListener("click", () => {
@@ -231,6 +285,23 @@
         if (current > 0) {
           current--;
           renderStory();
+        }
+      });
+
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      storyContainer.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      storyContainer.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        if (touchEndX < touchStartX - 50) {
+          nextBtn.click();
+        }
+        if (touchEndX > touchStartX + 50) {
+          prevBtn.click();
         }
       });
 
